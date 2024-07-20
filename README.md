@@ -28,3 +28,7 @@ type AuthenticationRequest struct {
     Password string `json:"password"`
 }
 ```
+
+The "normal" documentation string of the struct field will be used for the
+`description` field of the JSON Schema. The type will be infered from the
+choosen Go datatype.
