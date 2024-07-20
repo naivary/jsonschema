@@ -11,3 +11,20 @@ you which to read more about it see [here](https://pkg.go.dev/sigs.k8s.io/contro
 ## Syntax
 The syntax used to set the different markers is the following:
 `jsonschema:category:option=values`.
+
+## Example
+```go
+type AuthenticationRequest struct {
+    // +jsonschema:validation:format=email
+    // +jsonschema:validation:required
+    //
+    // Email is the email of the user who
+    // wants to login
+    Email string `json:"email"`
+
+    // +jsonschema:validation:required
+    //
+    // Password is raw password of the user
+    Password string `json:"password"`
+}
+```
