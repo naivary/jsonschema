@@ -25,11 +25,14 @@ func (j jsonSchemaGenerator) Generate(info *markers.TypeInfo, w io.Writer) error
 	if info.Fields == nil {
 		return errors.New("empty struct")
 	}
-	schm := jsonschm.JSONSchema{
-        Type: jsonschm.ObjectType,
-        Description: info.Doc,
-        Title: info.Name,
-    }
+	schm := jsonschm.Schema{
+		Type:        jsonschm.ObjectType,
+		Description: info.Doc,
+		Title:       info.Name,
+	}
+
+	for name, value := range info.Markers {
+	}
 	_ = schm
 	return json.NewEncoder(w).Encode(nil)
 }

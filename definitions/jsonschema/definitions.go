@@ -2,6 +2,7 @@ package jsondefs
 
 import (
 	"github.com/naivary/specraft/definitions"
+	jsonschm "github.com/naivary/specraft/schema/json"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -46,7 +47,7 @@ func (m Minimum) Value() float64 {
 
 func (Minimum) Help() *markers.DefinitionHelp {
 	return &markers.DefinitionHelp{
-		Category: "validation",
+		Category: "JSON Schema validation",
 		DetailedHelp: markers.DetailedHelp{
 			Summary: "minimum integer",
 			Details: "minimum integer which the specified has to be",
@@ -77,6 +78,12 @@ func (ID) Help() *markers.DefinitionHelp {
 	}
 }
 
+func (id ID) ApplyToSchema(s *jsonschm.Schema) error {
+    s.ID = string(id)
+    return nil
+}
+
+
 type Draft string
 
 func (d Draft) Value() string {
@@ -92,4 +99,9 @@ func (Draft) Help() *markers.DefinitionHelp {
 		},
 		FieldHelp: map[string]markers.DetailedHelp{},
 	}
+}
+
+func (d Draft) ApplyToSchema(s *jsonschm.Schema) error {
+    s.Schema = string(d)
+    return nil
 }

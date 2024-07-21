@@ -1,6 +1,8 @@
 package json
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 const (
 	InvalidType JSONType = iota + 1
@@ -58,21 +60,21 @@ func TypeOf(v any) JSONType {
 	}
 }
 
-type JSONSchema struct {
+type Schema struct {
 	// TODO(naivary): id,schema must be type markers
 	ID string `json:"$id"`
 	// TODO(naivary): add custom type for draft
-	Schema            string                  `json:"$schema"`
-	Title             string                  `json:"title,omitempty"`
-	Description       string                  `json:"description,omitempty"`
-	Type              JSONType                `json:"type"`
-	DependentRequired map[string][]string     `json:"dependentRequired,omitempty"`
-	Properties        map[string]JSONProperty `json:"properties"`
+	Schema            string              `json:"$schema"`
+	Title             string              `json:"title,omitempty"`
+	Description       string              `json:"description,omitempty"`
+	Type              JSONType            `json:"type"`
+	DependentRequired map[string][]string `json:"dependentRequired,omitempty"`
+	Properties        map[string]Property `json:"properties"`
 }
 
 // TODO(naivary): some of these fields are valid with some types.
 // It must be validated
-type JSONProperty struct {
+type Property struct {
 	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
 	Enum        []any  `json:"enum,omitempty"`

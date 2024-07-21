@@ -1,7 +1,7 @@
 package schema
 
-type Property[T any] interface {
-    TypeOf() T
+type Property interface {
+    TypeOf() any
 }
 
 type Applier interface {
