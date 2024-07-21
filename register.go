@@ -37,7 +37,7 @@ func (d *definitionWithHelp) clone() *definitionWithHelp {
 // AllDefinitions contains all marker definitions for this package.
 var AllDefinitions []*definitionWithHelp
 
-type hasHelp interface {
+type Helper interface {
 	Help() *markers.DefinitionHelp
 }
 
@@ -49,7 +49,7 @@ func mustMakeAllWithPrefix(prefix string, target markers.TargetType, objs ...any
 		if err != nil {
 			return nil, err
 		}
-		defs[i] = &definitionWithHelp{Definition: def, Help: obj.(hasHelp).Help()}
+		defs[i] = &definitionWithHelp{Definition: def, Help: obj.(Helper).Help()}
 	}
 	return defs, nil
 }
