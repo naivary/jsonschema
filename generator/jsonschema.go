@@ -3,11 +3,9 @@ package generator
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"go/ast"
 	"io"
 
-	"github.com/naivary/specraft/schema"
+	jsonschm "github.com/naivary/specraft/schema/json"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -19,33 +17,19 @@ var _ Generator = (*jsonSchemaGenerator)(nil)
 
 type jsonSchemaGenerator struct{}
 
+// 1. take one Field
+// 2. create a new property for that field with the correct type
+// 3. set all the defined markers on the property
+// 4. add the property to the Schema.
 func (j jsonSchemaGenerator) Generate(info *markers.TypeInfo, w io.Writer) error {
 	if info.Fields == nil {
 		return errors.New("empty struct")
 	}
-
-	schm := schema.JSONSchema{
-		ID:     "test-id",
-		Schema: "test-schema",
-		Type:   schema.ObjectType,
-		Title:  info.Name,
-	}
-
-	properties := make(map[string]schema.Property)
-	for _, field := range info.Fields {
-		// TODO(naivary): embedded types are still not handled
-		prop := schema.Property{}
-		typ := schema.TypeOf(field.RawField.Type.(*ast.Ident).String())
-		if typ == schema.InvalidType {
-			return errors.New("invalid json type")
-		}
-        fmt.Println(field.Markers)
-
-		prop.Type = typ.String()
-		prop.Description = field.Doc
-		properties[field.Name] = prop
-	}
-
-	schm.Properties = properties
-	return json.NewEncoder(w).Encode(&schm)
+	schm := jsonschm.JSONSchema{
+        Type: jsonschm.ObjectType,
+        Description: info.Doc,
+        Title: info.Name,
+    }
+	_ = schm
+	return json.NewEncoder(w).Encode(nil)
 }

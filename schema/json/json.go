@@ -1,4 +1,4 @@
-package schema
+package json
 
 import "encoding/json"
 
@@ -59,18 +59,20 @@ func TypeOf(v any) JSONType {
 }
 
 type JSONSchema struct {
+	// TODO(naivary): id,schema must be type markers
 	ID string `json:"$id"`
 	// TODO(naivary): add custom type for draft
-	Schema            string              `json:"$schema"`
-	Title             string              `json:"title"`
-	Type              JSONType            `json:"type"`
-	DependentRequired map[string][]string `json:"dependentRequired,omitempty"`
-	Properties        map[string]Property `json:"properties"`
+	Schema            string                  `json:"$schema"`
+	Title             string                  `json:"title,omitempty"`
+	Description       string                  `json:"description,omitempty"`
+	Type              JSONType                `json:"type"`
+	DependentRequired map[string][]string     `json:"dependentRequired,omitempty"`
+	Properties        map[string]JSONProperty `json:"properties"`
 }
 
 // TODO(naivary): some of these fields are valid with some types.
 // It must be validated
-type Property struct {
+type JSONProperty struct {
 	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
 	Enum        []any  `json:"enum,omitempty"`
@@ -98,8 +100,8 @@ type NumericProperty struct {
 
 type ArrayProperty struct {
 	Items       *ArrayItem `json:"items,omitempty"`
-	MaxItems    string     `json:"maxItems,omitempty"`
-	MinItems    string     `json:"minItems,omitempty"`
+	MaxItems    int        `json:"maxItems,omitempty"`
+	MinItems    int        `json:"minItems,omitempty"`
 	UniqueItems bool       `json:"uniqueItems,omitempty"`
 }
 

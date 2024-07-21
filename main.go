@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 
+	jsondefs "github.com/naivary/specraft/definitions/jsonschema"
 	"github.com/naivary/specraft/generator"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -19,7 +21,7 @@ func main() {
 
 func run() error {
 	reg := &markers.Registry{}
-	for _, def := range ValidationMarkers {
+	for _, def := range slices.Concat(jsondefs.FieldMarkers, jsondefs.TypeMarkers) {
 		if err := reg.Register(def.Definition); err != nil {
 			return err
 		}
@@ -44,8 +46,13 @@ func run() error {
 			return err
 		}
 	}
-    fmt.Println(infos[0].Fields[0])
-	gen := generator.NewJSONSchema()
-	gen.Generate(infos[0], os.Stdout)
-	return nil
+
+	for _, info := range infos {
+		for name := range info.Markers {
+            fmt.Println(name)
+			typ := MarkerToType(name)
+			fmt.Println(typ)
+		}
+	}
+	return generator.NewJSONSchema().Generate(infos[0], os.Stdout)
 }
