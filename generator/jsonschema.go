@@ -3,6 +3,7 @@ package generator
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go/ast"
 	"io"
 
@@ -38,6 +39,7 @@ func (j jsonSchemaGenerator) Generate(info *markers.TypeInfo, w io.Writer) error
 		if typ == schema.InvalidType {
 			return errors.New("invalid json type")
 		}
+        fmt.Println(field.Markers)
 
 		prop.Type = typ.String()
 		prop.Description = field.Doc
