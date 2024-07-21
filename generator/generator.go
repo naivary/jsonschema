@@ -1,9 +1,13 @@
 package generator
 
-import "sigs.k8s.io/controller-tools/pkg/markers"
+import (
+	"io"
+
+	"sigs.k8s.io/controller-tools/pkg/markers"
+)
 
 type Generator interface {
     // Generate will be given all the defined types
     // with set marker comments
-    Generate(infos []*markers.TypeInfo) error
+    Generate(info *markers.TypeInfo, w io.Writer) error
 }

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/naivary/specraft/generator"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
@@ -43,6 +44,8 @@ func run() error {
 			return err
 		}
 	}
-	fmt.Println(infos[0].Fields)
+    fmt.Println(infos[0].Fields[0])
+	gen := generator.NewJSONSchema()
+	gen.Generate(infos[0], os.Stdout)
 	return nil
 }
