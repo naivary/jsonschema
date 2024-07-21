@@ -1,4 +1,4 @@
-package jsonschema
+package main
 
 import (
 	"reflect"

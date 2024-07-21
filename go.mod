@@ -1,4 +1,4 @@
-module github.com/naivary/jsonschema
+module github.com/naivary/specraft
 
 go 1.22.5
 
