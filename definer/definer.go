@@ -1,10 +1,36 @@
-package definitions
+package definer
 
 import (
 	"reflect"
 
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
+
+type Prefix = string
+
+type Helper interface {
+	Help() *markers.DefinitionHelp
+}
+
+type Applier[T any] interface {
+	ApplyToSchema(schm T) error
+}
+
+type Definer[T any] interface {
+	Define(def ...*DefinitionWithHelp) error
+
+	Prefixes() map[Prefix]markers.TargetType
+
+	Registry() *markers.Registry
+
+	ApplierFor(marker string, val []any) Applier[T]
+}
+
+type MarkerSet struct {
+	Prefix     string
+	TargetType markers.TargetType
+	Objs       []any
+}
 
 type DefinitionWithHelp struct {
 	*markers.Definition
@@ -26,27 +52,15 @@ func (d *DefinitionWithHelp) Register(reg *markers.Registry) error {
 	return nil
 }
 
-func (d *DefinitionWithHelp) clone() *DefinitionWithHelp {
-	newDef, newHelp := *d.Definition, *d.Help
-	return &DefinitionWithHelp{
-		Definition: &newDef,
-		Help:       &newHelp,
-	}
-}
-
-type Helper interface {
-	Help() *markers.DefinitionHelp
-}
-
-func MustMakeAllWithPrefix(prefix string, target markers.TargetType, objs ...any) []*DefinitionWithHelp {
+func makeAllWithPrefix(prefix string, target markers.TargetType, objs ...any) ([]*DefinitionWithHelp, error) {
 	defs := make([]*DefinitionWithHelp, len(objs))
 	for i, obj := range objs {
 		name := prefix + reflect.TypeOf(obj).Name()
 		def, err := markers.MakeDefinition(name, target, obj)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		defs[i] = &DefinitionWithHelp{Definition: def, Help: obj.(Helper).Help()}
 	}
-	return defs
+	return defs, nil
 }

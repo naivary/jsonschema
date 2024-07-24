@@ -3,11 +3,10 @@ package generator
 import (
 	"io"
 
-	"sigs.k8s.io/controller-tools/pkg/markers"
+	"github.com/naivary/specraft/runtime"
 )
 
-type Generator interface {
-    // Generate will be given all the defined types
-    // with set marker comments
-    Generate(info *markers.TypeInfo, w io.Writer) error
+type Generator[T any, S any] interface {
+	// Generate will be given all the defined types with set marker comments
+	Generate(rt runtime.Runtime[T, S], w io.Writer) error
 }

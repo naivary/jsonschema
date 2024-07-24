@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
-	"slices"
 
-	jsondefs "github.com/naivary/specraft/definitions/jsonschema"
+	"github.com/naivary/specraft/definer"
 	"github.com/naivary/specraft/generator"
+	"github.com/naivary/specraft/runtime"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
@@ -21,38 +20,36 @@ func main() {
 
 func run() error {
 	reg := &markers.Registry{}
-	for _, def := range slices.Concat(jsondefs.FieldMarkers, jsondefs.TypeMarkers) {
-		if err := reg.Register(def.Definition); err != nil {
-			return err
-		}
-		reg.AddHelp(def.Definition, def.Help)
+	defn, err := definer.JSONSchema(reg)
+	if err != nil {
+		return err
 	}
 
 	// collect all the markers in the given project
+    // TODO(naivary) should be handled probably by the runtime
 	col := &markers.Collector{
-		Registry: reg,
+		Registry: defn.Registry(),
 	}
 	pkgs, err := loader.LoadRoots("examples/auth_req.go")
 	if err != nil {
 		return err
 	}
 
-	infos := make([]*markers.TypeInfo, 0)
+	pkgInfos := make(map[*loader.Package][]*markers.TypeInfo, 0)
 	for _, pkg := range pkgs {
+		pkg.NeedTypesInfo()
+		pkg.NeedSyntax()
+		infos := make([]*markers.TypeInfo, 0)
 		err := markers.EachType(col, pkg, func(info *markers.TypeInfo) {
 			infos = append(infos, info)
 		})
 		if err != nil {
 			return err
 		}
+		pkgInfos[pkg] = infos
+
 	}
 
-	for _, info := range infos {
-		for name := range info.Markers {
-            fmt.Println(name)
-			typ := MarkerToType(name)
-			fmt.Println(typ)
-		}
-	}
-	return generator.NewJSONSchema().Generate(infos[0], os.Stdout)
+	rt := runtime.NewRuntime(pkgInfos)
+	return generator.JSONSchema().Generate(rt, os.Stdout)
 }

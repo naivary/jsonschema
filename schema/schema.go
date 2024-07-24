@@ -1,9 +1,14 @@
 package schema
 
-type Property interface {
-    TypeOf() any
-}
+import (
+	"go/ast"
 
-type Applier interface {
-    ApplyToProperty() error
+	"golang.org/x/tools/go/packages"
+	"sigs.k8s.io/controller-tools/pkg/markers"
+)
+
+type Schema[T any] interface {
+	TypeOf(field *ast.Field, pkg *packages.Package) T
+
+	NameForField(info *markers.FieldInfo) string
 }

@@ -1,22 +1,24 @@
 package examples
 
-
 // AuthRequest is setting all the needed
 // fields to authenticate a user
 //
 // +jsonschema:meta:ID=test-id
 // +jsonschema:meta:Draft=2-07
-type AuthRequest struct {
-    // Email of the user trying
-    // to authenticate
-    //
-    // +jsonschema:validation:Maximum=3
-    // +openapi:validation:M=3
-    Email string `json:"email"`
+type AuthRequest[T any] struct {
+	User      User            `json:"user,omitempty"`
+	User2     *User           `json:"user2,omitempty"`
+	Bar       string          `json:"bar,omitempty"`
+	Foo       []string        `json:"foo,omitempty"`
+	FooBarMap map[string]User `json:"fooBarMap"`
+	// Size of the request
+	// +jsonschema:validation:Maximum=1024
+	Size  int  `json:"size,omitempty"`
+	Size2 *int `json:"size2,omitempty"`
+	F     T    `json:"f,omitempty"`
+}
 
-    // Password is the raw password of
-    // the user trying to authenticate
-    //
-    // +jsonschema:validation:Minimum=2
-    Password string `json:"password"`
+type User struct {
+	Email    string
+	Password string
 }

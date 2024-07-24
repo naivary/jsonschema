@@ -1,19 +1,19 @@
 package generator
 
 import (
-	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
+	"reflect"
 
-	jsonschm "github.com/naivary/specraft/schema/json"
-	"sigs.k8s.io/controller-tools/pkg/markers"
+	"github.com/naivary/specraft/runtime"
+	"github.com/naivary/specraft/schema"
 )
 
-func NewJSONSchema() Generator {
-	return jsonSchemaGenerator{}
+func JSONSchema() Generator[schema.JSONType, *schema.JSON] {
+    return jsonSchemaGenerator{}
 }
 
-var _ Generator = (*jsonSchemaGenerator)(nil)
+var _ Generator[schema.JSONType, *schema.JSON] = (*jsonSchemaGenerator)(nil)
 
 type jsonSchemaGenerator struct{}
 
@@ -21,18 +21,15 @@ type jsonSchemaGenerator struct{}
 // 2. create a new property for that field with the correct type
 // 3. set all the defined markers on the property
 // 4. add the property to the Schema.
-func (j jsonSchemaGenerator) Generate(info *markers.TypeInfo, w io.Writer) error {
-	if info.Fields == nil {
-		return errors.New("empty struct")
+func (j jsonSchemaGenerator) Generate(rt runtime.Runtime[schema.JSONType, *schema.JSON], w io.Writer) error {
+	pkgs := rt.Packages()
+	for pkg, infos := range pkgs {
+		for _, info := range infos {
+			for _, field := range info.Fields {
+				typ := pkg.TypesInfo.Types[field.RawField.Type].Type
+				fmt.Println(reflect.TypeOf(typ))
+			}
+		}
 	}
-	schm := jsonschm.Schema{
-		Type:        jsonschm.ObjectType,
-		Description: info.Doc,
-		Title:       info.Name,
-	}
-
-	for name, value := range info.Markers {
-	}
-	_ = schm
-	return json.NewEncoder(w).Encode(nil)
+	return nil
 }
