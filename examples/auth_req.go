@@ -6,6 +6,7 @@ package examples
 // +jsonschema:meta:ID=test-id
 // +jsonschema:meta:Draft=2-07
 type AuthRequest struct {
+    // +jsonschema:validation:required
 	User      User `json:"user,omitempty"`
 	UserPtr   *User
 	Bar       int             `json:"bar,omitempty"`
@@ -19,7 +20,10 @@ type AuthRequest struct {
 }
 
 type User struct {
+    // +jsonschema:validation:Format=email
+    // +jsonschema:validation:required
 	Email    string
+    // +jsonschema:validation:required
 	Password string
 }
 

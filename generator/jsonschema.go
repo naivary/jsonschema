@@ -20,7 +20,7 @@ type jsonSchemaGenerator struct{}
 func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *loader.Package, typeInfo *markers.TypeInfo) (*schema.JSON, error) {
 	typeType := pkg.TypesInfo.TypeOf(typeInfo.RawSpec.Type)
 	if !schema.IsStructType(typeType) {
-	    return nil, ErrNonStructType
+		return nil, ErrNonStructType
 	}
 
 	schm := &schema.JSON{
@@ -38,10 +38,10 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 	}
 
 	for _, fieldInfo := range typeInfo.Fields {
-        fieldType := pkg.TypesInfo.TypeOf(fieldInfo.RawField.Type)
-        if schema.IsStructType(fieldType) {
-            // make a reference to the otherhema of the
-        }
+		fieldType := pkg.TypesInfo.TypeOf(fieldInfo.RawField.Type)
+		if schema.IsStructType(fieldType) {
+			// make a reference to the otherhema of the
+		}
 		fieldSchm := &schema.JSON{
 			Description: fieldInfo.Doc,
 			Type:        schema.JSONTypeOf(fieldType),
@@ -58,5 +58,6 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 		name := schema.JSONNameForField(&fieldInfo)
 		schm.Properties[name] = fieldSchm
 	}
+
 	return schm, nil
 }

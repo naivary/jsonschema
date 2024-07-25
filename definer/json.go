@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	JSONSchemaValidationPrefix = "jsonschema:validation:"
-	JSONSchemaMetaPrefix       = "jsonschema:meta:"
+	JSONSchemaValidationPrefix     = "jsonschema:validation:"
+	JSONSchemaMetaPrefix           = "jsonschema:meta:"
+	JSONSchemaItemValidationPrefix = "jsonschema:validation:item"
 )
 
 var _ Definer[*schema.JSON] = (*jsonSchemaDefiner)(nil)
@@ -44,7 +45,6 @@ func (j *jsonSchemaDefiner) Prefixes() map[Prefix]markers.TargetType {
 	}
 }
 
-
 func (j *jsonSchemaDefiner) ApplierForMarker(marker string, val []any) Applier[*schema.JSON] {
 	name := strings.TrimPrefix(marker, JSONSchemaValidationPrefix)
 	name = strings.TrimPrefix(name, JSONSchemaMetaPrefix)
@@ -71,6 +71,30 @@ func (j *jsonSchemaDefiner) init() error {
 				// numeric markers
 				Maximum(0),
 				Minimum(0),
+				ExclusiveMaximum(false),
+				ExclusiveMinimum(false),
+				MultipleOf(0.0),
+
+				// string markers
+				MaxLength(0),
+				MinLength(0),
+				Pattern(""),
+				ContentEncoding(""),
+				ContentMediatype(""),
+
+				// array markers
+				MaxItems(0),
+				MinItems(0),
+				UniqueItems(false),
+			},
+		},
+		{
+			Prefix:     JSONSchemaValidationPrefix,
+			TargetType: markers.DescribesType,
+			Objs: []any{
+				// object markers
+				MinProperties(0),
+				MaxProperties(0),
 			},
 		},
 		{

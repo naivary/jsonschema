@@ -80,11 +80,11 @@ type JSON struct {
 	ContentMediatype string `json:"contentMediatype,omitempty"`
 
 	// numertic
-	Maximum          *int `json:"maximum,omitempty"`
-	Minimum          *int `json:"minimum,omitempty"`
-	MultipleOf       *int `json:"multipleOf,omitempty"`
-	ExclusiveMaximum bool `json:"exclusiveMaximum,omitempty"`
-	ExclusiveMinimum bool `json:"exclusiveMinimum,omitempty"`
+	Maximum          *int     `json:"maximum,omitempty"`
+	Minimum          *int     `json:"minimum,omitempty"`
+	MultipleOf       *float64 `json:"multipleOf,omitempty"`
+	ExclusiveMaximum bool     `json:"exclusiveMaximum,omitempty"`
+	ExclusiveMinimum bool     `json:"exclusiveMinimum,omitempty"`
 
 	// array
 	Items       *JSON `json:"items,omitempty"`

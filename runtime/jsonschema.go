@@ -79,27 +79,34 @@ func (jrt *jsonSchemaRuntime) Schemas() map[string]*os.File {
 func (jrt *jsonSchemaRuntime) Generate() error {
 	for pkg, typeInfos := range jrt.pkgs {
 		for _, typeInfo := range typeInfos {
-			fileName := fmt.Sprintf("%s.json", typeInfo.Name)
-			file, err := jrt.createFile(fileName)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
 			schm, err := jrt.gen.Generate(jrt.defn, pkg, typeInfo)
-            if errors.Is(err, generator.ErrNonStructType) {
-                continue
-            }
+			if errors.Is(err, generator.ErrNonStructType) {
+				continue
+			}
 			if err != nil {
 				return err
 			}
-
-			err = json.NewEncoder(file).Encode(schm)
+			err = jrt.writeToFile(typeInfo.Name, schm)
 			if err != nil {
 				return err
 			}
-			jrt.schemas[schm.ID] = file
 		}
 	}
+	return nil
+}
+
+func (jrt *jsonSchemaRuntime) writeToFile(name string, s *schema.JSON) error {
+	fileName := fmt.Sprintf("%s.json", name)
+	file, err := jrt.createFile(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = json.NewEncoder(file).Encode(s)
+	if err != nil {
+		return err
+	}
+	jrt.schemas[s.ID] = file
 	return nil
 }
 
