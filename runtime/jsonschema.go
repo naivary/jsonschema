@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,7 +42,7 @@ func JSONSchema(rootDir string, roots ...string) (Runtime[*schema.JSON], error) 
 	jrt.pkgs = pkgs
 
 	jrt.gen = generator.JSONSchema()
-	jrt.files = make(map[string]*os.File)
+	jrt.schemas = make(map[string]*os.File)
 
 	return jrt, nil
 }
@@ -56,8 +58,8 @@ type jsonSchemaRuntime struct {
 
 	defn definer.Definer[*schema.JSON]
 
-	// files are all the generated files indexed by name
-	files map[string]*os.File
+	// schemas are all the generated files indexed by $id
+	schemas map[string]*os.File
 
 	rootDir string
 }
@@ -70,24 +72,32 @@ func (jrt *jsonSchemaRuntime) Registry() *markers.Registry {
 	return jrt.reg
 }
 
-func (jrt *jsonSchemaRuntime) Files() map[string]*os.File {
-	return jrt.files
+func (jrt *jsonSchemaRuntime) Schemas() map[string]*os.File {
+	return jrt.schemas
 }
 
 func (jrt *jsonSchemaRuntime) Generate() error {
 	for pkg, typeInfos := range jrt.pkgs {
 		for _, typeInfo := range typeInfos {
-            fileName := fmt.Sprintf("%s.json", typeInfo.Name)
+			fileName := fmt.Sprintf("%s.json", typeInfo.Name)
 			file, err := jrt.createFile(fileName)
-            defer file.Close()
 			if err != nil {
 				return err
 			}
-			err = jrt.gen.Generate(jrt.defn, pkg, typeInfo, file)
+			defer file.Close()
+			schm, err := jrt.gen.Generate(jrt.defn, pkg, typeInfo)
+            if errors.Is(err, generator.ErrNonStructType) {
+                continue
+            }
 			if err != nil {
 				return err
 			}
-			jrt.files[file.Name()] = file
+
+			err = json.NewEncoder(file).Encode(schm)
+			if err != nil {
+				return err
+			}
+			jrt.schemas[schm.ID] = file
 		}
 	}
 	return nil

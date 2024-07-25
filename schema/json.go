@@ -1,11 +1,9 @@
 package schema
 
 import (
-	"go/ast"
 	"go/types"
 	"strings"
 
-	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -44,6 +42,10 @@ func (t JSONType) String() string {
 
 func (j JSONType) MarshalText() ([]byte, error) {
 	return []byte(j.String()), nil
+}
+
+func NewJSON() *JSON {
+	return &JSON{}
 }
 
 type JSON struct {
@@ -107,17 +109,12 @@ func JSONNameForField(info *markers.FieldInfo) string {
 	return strings.ToLower(info.Name)
 }
 
-func JSONTypeOf(exp ast.Expr, pkg *loader.Package) JSONType {
-	t := pkg.TypesInfo.TypeOf(exp)
-	return typeOf(t)
-}
-
-func typeOf(t types.Type) JSONType {
+func JSONTypeOf(t types.Type) JSONType {
 	switch v := t.(type) {
 	case *types.Basic:
 		return basicKindToJSONType(v.Kind())
 	case *types.Pointer:
-		return typeOf(v.Elem())
+		return JSONTypeOf(v.Elem())
 	case *types.Slice:
 		return JSONTypeArray
 	case *types.Array:
@@ -125,7 +122,7 @@ func typeOf(t types.Type) JSONType {
 	case *types.Struct:
 		return JSONTypeObject
 	case *types.Named:
-		return typeOf(v.Underlying())
+		return JSONTypeOf(v.Underlying())
 	case *types.Map:
 		return JSONTypeObject
 	default:
@@ -149,9 +146,13 @@ func basicKindToJSONType(kind types.BasicKind) JSONType {
 }
 
 func IsStructType(t types.Type) bool {
-	switch t.(type) {
+	switch v := t.(type) {
 	case *types.Struct:
 		return true
+	case *types.Pointer:
+		return IsStructType(v.Elem())
+	case *types.Named:
+		return IsStructType(v.Underlying())
 	default:
 		return false
 	}
