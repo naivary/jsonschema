@@ -6,7 +6,7 @@ package examples
 // +jsonschema:meta:ID=test-id
 // +jsonschema:meta:Draft=2-07
 type AuthRequest struct {
-    // +jsonschema:validation:required
+    // +jsonschema:validation:Required
 	User      User `json:"user,omitempty"`
 	UserPtr   *User
 	Bar       int             `json:"bar,omitempty"`
@@ -16,14 +16,15 @@ type AuthRequest struct {
 
 	// Size of the request
 	// +jsonschema:validation:Maximum=1024
+    // +jsonschema:validation:Required
 	Size Size `json:"size,omitempty"`
 }
 
 type User struct {
     // +jsonschema:validation:Format=email
-    // +jsonschema:validation:required
+    // +jsonschema:validation:Required
 	Email    string
-    // +jsonschema:validation:required
+    // +jsonschema:validation:Required
 	Password string
 }
 

@@ -1,15 +1,9 @@
 package generator
 
 import (
-	"errors"
-
 	"github.com/naivary/specraft/definer"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
-)
-
-var (
-	ErrNonStructType = errors.New("type is not a struct")
 )
 
 type Generator[T any] interface {

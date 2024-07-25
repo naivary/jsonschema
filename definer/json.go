@@ -10,7 +10,7 @@ import (
 const (
 	JSONSchemaValidationPrefix     = "jsonschema:validation:"
 	JSONSchemaMetaPrefix           = "jsonschema:meta:"
-	JSONSchemaItemValidationPrefix = "jsonschema:validation:item"
+	JSONSchemaItemValidationPrefix = "jsonschema:validation:item:"
 )
 
 var _ Definer[*schema.JSON] = (*jsonSchemaDefiner)(nil)
@@ -40,8 +40,9 @@ func (j *jsonSchemaDefiner) define(defs ...*DefinitionWithHelp) error {
 
 func (j *jsonSchemaDefiner) Prefixes() map[Prefix]markers.TargetType {
 	return map[Prefix]markers.TargetType{
-		JSONSchemaValidationPrefix: markers.DescribesField,
-		JSONSchemaMetaPrefix:       markers.DescribesType,
+		JSONSchemaValidationPrefix:     markers.DescribesField,
+		JSONSchemaItemValidationPrefix: markers.DescribesField,
+		JSONSchemaMetaPrefix:           markers.DescribesType,
 	}
 }
 
@@ -57,6 +58,8 @@ func (j *jsonSchemaDefiner) ApplierForMarker(marker string, val []any) Applier[*
 		return (val[0]).(Maximum)
 	case "Minimum":
 		return (val[0]).(Minimum)
+    case "Required":
+        return Required(struct{}{})
 	default:
 		return nil
 	}
@@ -86,6 +89,9 @@ func (j *jsonSchemaDefiner) init() error {
 				MaxItems(0),
 				MinItems(0),
 				UniqueItems(false),
+
+				// object markers
+				Required(struct{}{}),
 			},
 		},
 		{

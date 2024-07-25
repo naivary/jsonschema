@@ -178,8 +178,16 @@ func (MaxProperties) Help() *markers.DefinitionHelp {
     }
 }
 
-
-
+func (Required) Help() *markers.DefinitionHelp {
+    return &markers.DefinitionHelp{
+        Category: JSONSchemaValidationObjectCategory,
+		DetailedHelp: markers.DetailedHelp{
+			Summary: "marks a field as required",
+			Details: "marks a field as required",
+		},
+        FieldHelp: map[string]markers.DetailedHelp{},
+    }
+}
 
 func (ID) Help() *markers.DefinitionHelp {
 	return &markers.DefinitionHelp{

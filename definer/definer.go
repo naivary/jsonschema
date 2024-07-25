@@ -18,10 +18,6 @@ type Helper interface {
 	Help() *markers.DefinitionHelp
 }
 
-type Applier[T any] interface {
-	ApplyToSchema(schm T) error
-}
-
 type MarkerSet struct {
 	Prefix     string
 	TargetType markers.TargetType
