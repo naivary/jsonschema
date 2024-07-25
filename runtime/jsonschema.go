@@ -1,25 +1,122 @@
 package runtime
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/naivary/specraft/definer"
+	"github.com/naivary/specraft/generator"
 	"github.com/naivary/specraft/schema"
+	"github.com/naivary/specraft/utils/fsutil"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
-func NewRuntime(pkgs map[*loader.Package][]*markers.TypeInfo) Runtime[schema.JSONType, *schema.JSON] {
-	return &jsonSchemaRuntime{pkgs}
-}
+func JSONSchema(rootDir string, roots ...string) (Runtime[*schema.JSON], error) {
+	jrt := &jsonSchemaRuntime{}
+	if err := fsutil.MkdirAllIfNotExsting(rootDir, os.FileMode(0755)); err != nil {
+		return nil, err
+	}
+	jrt.rootDir = rootDir
 
-var _ Runtime[schema.JSONType, *schema.JSON] = (*jsonSchemaRuntime)(nil)
+	reg := &markers.Registry{}
+	jrt.reg = reg
+
+	defn, err := definer.JSONSchema(reg)
+	if err != nil {
+		return nil, err
+	}
+	jrt.defn = defn
+
+	col := &markers.Collector{
+		Registry: reg,
+	}
+	jrt.col = col
+	pkgs, err := jrt.loadPackages(roots...)
+	if err != nil {
+		return nil, err
+	}
+	jrt.pkgs = pkgs
+
+	jrt.gen = generator.JSONSchema()
+	jrt.files = make(map[string]*os.File)
+
+	return jrt, nil
+}
 
 type jsonSchemaRuntime struct {
+	reg *markers.Registry
+
+	col *markers.Collector
+
 	pkgs map[*loader.Package][]*markers.TypeInfo
+
+	gen generator.Generator[*schema.JSON]
+
+	defn definer.Definer[*schema.JSON]
+
+	// files are all the generated files indexed by name
+	files map[string]*os.File
+
+	rootDir string
 }
 
-func (jrt jsonSchemaRuntime) NameForField(info *markers.FieldInfo) string {
-	return ""
-}
-
-func (jrt jsonSchemaRuntime) Packages() map[*loader.Package][]*markers.TypeInfo {
+func (jrt *jsonSchemaRuntime) Packages() map[*loader.Package][]*markers.TypeInfo {
 	return jrt.pkgs
+}
+
+func (jrt *jsonSchemaRuntime) Registry() *markers.Registry {
+	return jrt.reg
+}
+
+func (jrt *jsonSchemaRuntime) Files() map[string]*os.File {
+	return jrt.files
+}
+
+func (jrt *jsonSchemaRuntime) Generate() error {
+	for pkg, typeInfos := range jrt.pkgs {
+		for _, typeInfo := range typeInfos {
+            fileName := fmt.Sprintf("%s.json", typeInfo.Name)
+			file, err := jrt.createFile(fileName)
+            defer file.Close()
+			if err != nil {
+				return err
+			}
+			err = jrt.gen.Generate(jrt.defn, pkg, typeInfo, file)
+			if err != nil {
+				return err
+			}
+			jrt.files[file.Name()] = file
+		}
+	}
+	return nil
+}
+
+func (jrt *jsonSchemaRuntime) createFile(name string) (*os.File, error) {
+	path := filepath.Join(jrt.rootDir, name)
+	return os.Create(path)
+}
+
+func (jrt *jsonSchemaRuntime) loadPackages(roots ...string) (map[*loader.Package][]*markers.TypeInfo, error) {
+	pkgs, err := loader.LoadRoots(roots...)
+	if err != nil {
+		return nil, err
+	}
+	typeInfos := make(map[*loader.Package][]*markers.TypeInfo, 0)
+	for _, pkg := range pkgs {
+		pkg.NeedTypesInfo()
+		pkg.NeedSyntax()
+
+		infos := make([]*markers.TypeInfo, 0)
+		err := markers.EachType(jrt.col, pkg, func(info *markers.TypeInfo) {
+			infos = append(infos, info)
+		})
+		if err != nil {
+			return nil, err
+		}
+		typeInfos[pkg] = infos
+	}
+
+	return typeInfos, nil
 }

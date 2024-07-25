@@ -6,6 +6,12 @@ import (
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
+type Definer[T any] interface {
+	Prefixes() map[Prefix]markers.TargetType
+
+	ApplierForMarker(marker string, val []any) Applier[T]
+}
+
 type Prefix = string
 
 type Helper interface {
@@ -14,16 +20,6 @@ type Helper interface {
 
 type Applier[T any] interface {
 	ApplyToSchema(schm T) error
-}
-
-type Definer[T any] interface {
-	Define(def ...*DefinitionWithHelp) error
-
-	Prefixes() map[Prefix]markers.TargetType
-
-	Registry() *markers.Registry
-
-	ApplierFor(marker string, val []any) Applier[T]
 }
 
 type MarkerSet struct {
@@ -52,7 +48,7 @@ func (d *DefinitionWithHelp) Register(reg *markers.Registry) error {
 	return nil
 }
 
-func makeAllWithPrefix(prefix string, target markers.TargetType, objs ...any) ([]*DefinitionWithHelp, error) {
+func makeDefsWithPrefix(prefix string, target markers.TargetType, objs ...any) ([]*DefinitionWithHelp, error) {
 	defs := make([]*DefinitionWithHelp, len(objs))
 	for i, obj := range objs {
 		name := prefix + reflect.TypeOf(obj).Name()

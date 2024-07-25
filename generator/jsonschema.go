@@ -1,35 +1,60 @@
 package generator
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"reflect"
 
-	"github.com/naivary/specraft/runtime"
+	"github.com/naivary/specraft/definer"
 	"github.com/naivary/specraft/schema"
+	"sigs.k8s.io/controller-tools/pkg/loader"
+	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
-func JSONSchema() Generator[schema.JSONType, *schema.JSON] {
-    return jsonSchemaGenerator{}
+func JSONSchema() Generator[*schema.JSON] {
+	return jsonSchemaGenerator{}
 }
 
-var _ Generator[schema.JSONType, *schema.JSON] = (*jsonSchemaGenerator)(nil)
+var _ Generator[*schema.JSON] = (*jsonSchemaGenerator)(nil)
 
 type jsonSchemaGenerator struct{}
 
-// 1. take one Field
-// 2. create a new property for that field with the correct type
-// 3. set all the defined markers on the property
-// 4. add the property to the Schema.
-func (j jsonSchemaGenerator) Generate(rt runtime.Runtime[schema.JSONType, *schema.JSON], w io.Writer) error {
-	pkgs := rt.Packages()
-	for pkg, infos := range pkgs {
-		for _, info := range infos {
-			for _, field := range info.Fields {
-				typ := pkg.TypesInfo.Types[field.RawField.Type].Type
-				fmt.Println(reflect.TypeOf(typ))
-			}
+func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *loader.Package, typeInfo *markers.TypeInfo, w io.Writer) error {
+	t := pkg.TypesInfo.TypeOf(typeInfo.RawSpec.Type)
+	if !schema.IsStructType(t) {
+		return nil
+	}
+
+	schm := &schema.JSON{
+		Description: typeInfo.Doc,
+		Title:       typeInfo.Name,
+		Type:        schema.JSONTypeOf(typeInfo.RawSpec.Type, pkg),
+		Properties:  make(map[string]*schema.JSON),
+	}
+
+	for name, val := range typeInfo.Markers {
+		err := defn.ApplierForMarker(name, val).ApplyToSchema(schm)
+		if err != nil {
+			return err
 		}
 	}
-	return nil
+
+	for _, fieldInfo := range typeInfo.Fields {
+		fieldSchm := &schema.JSON{
+			Description: fieldInfo.Doc,
+			Type:        schema.JSONTypeOf(fieldInfo.RawField.Type, pkg),
+		}
+		if fieldSchm.IsInvalidType() {
+			return fmt.Errorf("invalid JSON Type for field: %s", fieldInfo.Name)
+		}
+		for name, val := range fieldInfo.Markers {
+			err := defn.ApplierForMarker(name, val).ApplyToSchema(fieldSchm)
+			if err != nil {
+				return err
+			}
+		}
+		name := schema.JSONNameForField(&fieldInfo)
+		schm.Properties[name] = fieldSchm
+	}
+	return json.NewEncoder(w).Encode(schm)
 }
