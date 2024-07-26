@@ -19,12 +19,12 @@ func IsType[T any](t types.Type) (T, bool) {
 	}
 }
 
-func TypeConversion[T any](t types.Type, tc schema.TypeConverter[T]) T {
+func Convert[T any](t types.Type, tc schema.TypeConverter[T]) T {
 	switch v := t.(type) {
 	case *types.Basic:
 		return basicKindConversion(v.Kind(), tc)
 	case *types.Pointer:
-		return TypeConversion(v.Elem(), tc)
+		return Convert(v.Elem(), tc)
 	case *types.Slice:
 		return tc.Slice()
 	case *types.Array:
@@ -32,7 +32,7 @@ func TypeConversion[T any](t types.Type, tc schema.TypeConverter[T]) T {
 	case *types.Struct:
 		return tc.Struct()
 	case *types.Named:
-		return TypeConversion(v.Underlying(), tc)
+		return Convert(v.Underlying(), tc)
 	case *types.Map:
 		return tc.Map()
 	default:

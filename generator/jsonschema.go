@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/types"
+	"reflect"
 
 	"github.com/naivary/specraft/definer"
 	"github.com/naivary/specraft/schema"
@@ -30,6 +31,7 @@ type jsonSchemaGenerator struct {
 
 func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *loader.Package, typeInfo *markers.TypeInfo) (*schema.JSON, error) {
 	typeType := pkg.TypesInfo.TypeOf(typeInfo.RawSpec.Type)
+    fmt.Println(reflect.TypeOf(typeInfo.RawSpec.Type))
 	if _, ok := typesutil.IsType[*types.Struct](typeType); !ok {
 		return nil, ErrNonStructType
 	}
@@ -39,7 +41,7 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 		ID:          "default-id",
 		Description: typeInfo.Doc,
 		Title:       typeInfo.Name,
-		Type:        typesutil.TypeConversion(typeType, j.tc),
+		Type:        typesutil.Convert(typeType, j.tc),
 		Properties:  make(map[string]*schema.JSON),
 	}
 
@@ -58,7 +60,7 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 		}
 		fieldSchm := &schema.JSON{
 			Description: fieldInfo.Doc,
-			Type:        typesutil.TypeConversion(fieldType, j.tc),
+			Type:        typesutil.Convert(fieldType, j.tc),
 		}
 		if fieldSchm.IsInvalidType() {
 			return nil, fmt.Errorf("invalid JSON Type for field: %s", fieldInfo.Name)

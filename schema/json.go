@@ -92,16 +92,8 @@ type JSON struct {
 	UniqueItems bool  `json:"uniqueItems,omitempty"`
 }
 
-func (j *JSON) IsType(t JSONType) bool {
-	return j.Type == t
-}
-
-func (j *JSON) IsInvalidType() bool {
-	return j.Type == JSONTypeInvalid
-}
-
-func (j *JSON) IsObjectType() bool {
-	return j.Type == JSONTypeObject
+func (j *JSON) NameForField(info *markers.FieldInfo) string {
+    return JSONNameForField(info)
 }
 
 func JSONNameForField(info *markers.FieldInfo) string {
