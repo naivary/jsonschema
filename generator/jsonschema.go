@@ -3,9 +3,11 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"go/types"
 
 	"github.com/naivary/specraft/definer"
 	"github.com/naivary/specraft/schema"
+	"github.com/naivary/specraft/utils/typesutil"
 	"sigs.k8s.io/controller-tools/pkg/loader"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
@@ -15,16 +17,20 @@ var (
 )
 
 func JSONSchema() Generator[*schema.JSON] {
-	return jsonSchemaGenerator{}
+	return jsonSchemaGenerator{
+		tc: schema.NewJSONSchemaTypeConvert(),
+	}
 }
 
 var _ Generator[*schema.JSON] = (*jsonSchemaGenerator)(nil)
 
-type jsonSchemaGenerator struct{}
+type jsonSchemaGenerator struct {
+	tc schema.TypeConverter[schema.JSONType]
+}
 
 func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *loader.Package, typeInfo *markers.TypeInfo) (*schema.JSON, error) {
 	typeType := pkg.TypesInfo.TypeOf(typeInfo.RawSpec.Type)
-	if !schema.IsStructType(typeType) {
+	if _, ok := typesutil.IsType[*types.Struct](typeType); !ok {
 		return nil, ErrNonStructType
 	}
 
@@ -33,7 +39,7 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 		ID:          "default-id",
 		Description: typeInfo.Doc,
 		Title:       typeInfo.Name,
-		Type:        schema.JSONTypeOf(typeType),
+		Type:        typesutil.TypeConversion(typeType, j.tc),
 		Properties:  make(map[string]*schema.JSON),
 	}
 
@@ -47,12 +53,12 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 
 	for _, fieldInfo := range typeInfo.Fields {
 		fieldType := pkg.TypesInfo.TypeOf(fieldInfo.RawField.Type)
-		if schema.IsStructType(fieldType) {
+		if _, ok := typesutil.IsType[types.Struct](fieldType); ok {
 			// make a reference to the otherhema of the
 		}
 		fieldSchm := &schema.JSON{
 			Description: fieldInfo.Doc,
-			Type:        schema.JSONTypeOf(fieldType),
+			Type:        typesutil.TypeConversion(fieldType, j.tc),
 		}
 		if fieldSchm.IsInvalidType() {
 			return nil, fmt.Errorf("invalid JSON Type for field: %s", fieldInfo.Name)
@@ -62,7 +68,7 @@ func (j jsonSchemaGenerator) Generate(defn definer.Definer[*schema.JSON], pkg *l
 		for name, val := range fieldInfo.Markers {
 			fieldReq := definer.NewFieldApplyRequest(&fieldInfo, fieldSchm)
 			err := defn.ApplierForMarker(name, val).Apply(typeReq, fieldReq)
-            if err != nil {
+			if err != nil {
 				return nil, err
 			}
 		}

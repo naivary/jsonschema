@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"go/types"
 	"strings"
 
 	"sigs.k8s.io/controller-tools/pkg/markers"
@@ -93,6 +92,10 @@ type JSON struct {
 	UniqueItems bool  `json:"uniqueItems,omitempty"`
 }
 
+func (j *JSON) IsType(t JSONType) bool {
+	return j.Type == t
+}
+
 func (j *JSON) IsInvalidType() bool {
 	return j.Type == JSONTypeInvalid
 }
@@ -109,51 +112,45 @@ func JSONNameForField(info *markers.FieldInfo) string {
 	return strings.ToLower(info.Name)
 }
 
-func JSONTypeOf(t types.Type) JSONType {
-	switch v := t.(type) {
-	case *types.Basic:
-		return basicKindToJSONType(v.Kind())
-	case *types.Pointer:
-		return JSONTypeOf(v.Elem())
-	case *types.Slice:
-		return JSONTypeArray
-	case *types.Array:
-		return JSONTypeArray
-	case *types.Struct:
-		return JSONTypeObject
-	case *types.Named:
-		return JSONTypeOf(v.Underlying())
-	case *types.Map:
-		return JSONTypeObject
-	default:
-		return JSONTypeInvalid
-	}
+func NewJSONSchemaTypeConvert() TypeConverter[JSONType] {
+	return jsonSchemaTypeConverter{}
 }
 
-func basicKindToJSONType(kind types.BasicKind) JSONType {
-	switch kind {
-	case types.Bool:
-		return JSONTypeBoolean
-	case types.Int, types.Int8, types.Int16, types.Int32, types.Int64, types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-		return JSONTypeNumber
-	case types.Float32, types.Float64, types.Complex64, types.Complex128:
-		return JSONTypeNumber
-	case types.String:
-		return JSONTypeString
-	default:
-		return JSONTypeInvalid
-	}
+var _ TypeConverter[JSONType] = (*jsonSchemaTypeConverter)(nil)
+
+type jsonSchemaTypeConverter struct{}
+
+func (jsonSchemaTypeConverter) Invalid() JSONType {
+	return JSONTypeInvalid
 }
 
-func IsStructType(t types.Type) bool {
-	switch v := t.(type) {
-	case *types.Struct:
-		return true
-	case *types.Pointer:
-		return IsStructType(v.Elem())
-	case *types.Named:
-		return IsStructType(v.Underlying())
-	default:
-		return false
-	}
+func (jsonSchemaTypeConverter) Int() JSONType {
+	return JSONTypeNumber
+}
+func (jsonSchemaTypeConverter) UInt() JSONType {
+	return JSONTypeNumber
+}
+func (jsonSchemaTypeConverter) Float() JSONType {
+	return JSONTypeNumber
+}
+func (jsonSchemaTypeConverter) String() JSONType {
+	return JSONTypeString
+}
+func (jsonSchemaTypeConverter) Struct() JSONType {
+	return JSONTypeObject
+}
+func (jsonSchemaTypeConverter) Map() JSONType {
+	return JSONTypeObject
+}
+func (jsonSchemaTypeConverter) Array() JSONType {
+	return JSONTypeObject
+}
+func (jsonSchemaTypeConverter) Slice() JSONType {
+	return JSONTypeArray
+}
+func (jsonSchemaTypeConverter) Bool() JSONType {
+	return JSONTypeArray
+}
+func (jsonSchemaTypeConverter) Complex() JSONType {
+	return JSONTypeNumber
 }
